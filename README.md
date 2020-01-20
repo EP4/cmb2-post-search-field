@@ -26,6 +26,8 @@ $cmb->add_field( array(
 	'select_type' => 'radio',
 	// Will replace any selection with selection from modal. Default is 'add'
 	'select_behavior' => 'replace',
+	// Will change the text of the search button
+	'search_text' => 'Search Posts',
 ) );
 ```
 
@@ -36,6 +38,13 @@ $cmb->add_field( array(
 
 2. Search Modal  
 ![Search Modal](https://raw.githubusercontent.com/WebDevStudios/CMB2-Post-Search-field/master/post-search-dialog.png)
+
+## Changelog
+
+###v0.3.0
+* Display the post title instead of the ID
+* Several UI improvements (including replacing the search icon with a button)
+* Added 'search_text' arg to the field for allowing customization of the search button text
 
 ----
 
