@@ -1,5 +1,5 @@
-CMB2 Post Search field
-======================
+CMB2 Post Search field v0.3.0
+=============================
 
 Custom field for CMB2 which adds a post-search dialog for searching/attaching other post IDs.
 
@@ -41,7 +41,7 @@ $cmb->add_field( array(
 
 ## Changelog
 
-###v0.3.0
+### v0.3.0 - 2020/01/20
 * Display the post title instead of the ID
 * Several UI improvements (including replacing the search icon with a button)
 * Added 'search_text' arg to the field for allowing customization of the search button text
