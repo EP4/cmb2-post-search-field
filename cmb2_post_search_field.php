@@ -5,7 +5,7 @@
  * Description: Custom field for CMB2 which adds a post-search dialog for searching/attaching other post IDs
  * Author: WebDevStudios
  * Author URI: http://webdevstudios.com
- * Version: 0.2.5
+ * Version: 0.3.0
  * License: GPLv2
 */
 
@@ -19,7 +19,7 @@
  * @author    WebDevstudios <contact@webdevstudios.com>
  * @copyright 2016 WebDevstudios <contact@webdevstudios.com>
  * @license   GPL-2.0+
- * @version   0.2.5
+ * @version   0.3.0
  * @link      https://github.com/WebDevStudios/CMB2-Post-Search-field
  * @since     0.2.4
  */

@@ -9,7 +9,7 @@
  * @package  CMB2_Post_Search_field
  * @author   WebDevstudios <contact@webdevstudios.com>
  * @license  GPL-2.0+
- * @version  0.2.5
+ * @version  0.3.0
  * @link     https://github.com/WebDevStudios/CMB2-Post-Search-field
  * @since    0.2.4
  */
@@ -39,13 +39,25 @@ class CMB2_Post_Search_field {
 	}
 
 	public function render_field( $field, $escaped_value, $object_id, $object_type, $field_type ) {
+		$ids    = ! empty(  $escaped_value ) ? explode( ', ', $escaped_value ) : array();
+		$titles = array();
+
+		foreach ( $ids as $post_id ) {
+			$titles[] = get_the_title( $post_id );
+		}
+		echo '<div class="post-titles-container">';
+		echo '<input readonly="readonly" type="text" class="post-titles" value="' . implode( ', ', $titles ) . '" />';
+		echo '<span class="clear-field"><i class="dashicons dashicons-no"></i></span>';
+		echo '</div>';
 		echo $field_type->input( array(
+			'type'        => 'hidden',
 			'data-search' => json_encode( array(
 				'posttype'   => $field->args( 'post_type' ),
 				'selecttype' => 'radio' == $field->args( 'select_type' ) ? 'radio' : 'checkbox',
 				'selectbehavior' => 'replace' == $field->args( 'select_behavior' ) ? 'replace' : 'add',
 				'errortxt'   => esc_attr( $field_type->_text( 'error_text', __( 'An error has occurred. Please reload the page and try again.' ) ) ),
-				'findtxt'    => esc_attr( $field_type->_text( 'find_text', __( 'Find Posts or Pages' ) ) ),
+				'findtxt'    => $field->args( 'search_text' ) ? esc_attr( $field->args( 'search_text' ) ) : esc_attr( $field_type->_text( 'find_text', __( 'Find Posts or Pages' ) ) ),
+				'searchtxt'  => $field->args( 'search_text' ) ? esc_attr( $field->args( 'search_text' ) ) : __( 'Search' ),
 			) ),
 		) );
 	}
@@ -186,7 +198,6 @@ class CMB2_Post_Search_field {
 						}
 
 						search.$response.html( data );
-
 					}).fail( function() {
 						search.$response.text( search.errortxt );
 					});
@@ -196,8 +207,16 @@ class CMB2_Post_Search_field {
 					evt.preventDefault();
 
 					this.$checked = $( '#find-posts-response input[type="' + this.selecttype + '"]:checked' );
+					this.$title   = this.$checked;
 
-					var checked = this.$checked.map(function() { return this.value; }).get();
+
+					var checked = this.$checked.map(function() {
+						 var data = {
+							id: this.value,
+							title: $("label[for='" + $(this).attr('id') + "']").text(),
+						 }
+						 return data;
+					}).get();
 
 					if ( ! checked.length ) {
 						this.close();
@@ -208,16 +227,19 @@ class CMB2_Post_Search_field {
 				},
 
 				handleSelected: function( checked ) {
-					checked = checked.join( ', ' );
+					var checkedIds = checked.map( ({ id }) => id ).join( ', ' );
+					var checkedTitles = checked.map( ({ title }) => title ).join( ', ' );
 
 					if ( 'add' === this.selectbehavior ) {
 						var existing = this.$idInput.val();
 						if ( existing ) {
-							checked = existing + ', ' + checked;
+							checkedIds = existing + ', ' + checkedIds;
 						}
 					}
 
-					this.$idInput.val( checked ).trigger( 'change' );
+					this.$idInput.val( checkedIds ).trigger( 'change' );
+					this.$idTitle.attr('value', checkedTitles ).trigger( 'change' );
+					
 					this.close();
 				}
 
@@ -232,7 +254,8 @@ class CMB2_Post_Search_field {
 			window.cmb2_post_search.openSearch = function( evt ) {
 				var search = window.cmb2_post_search;
 
-				search.$idInput = $( evt.currentTarget ).parents( '.cmb-type-post-search-text' ).find( '.cmb-td input[type="text"]' );
+				search.$idInput = $( evt.currentTarget ).parents( '.cmb-type-post-search-text' ).find( '.cmb-td input[type="hidden"]' );
+				search.$idTitle = $( evt.currentTarget ).parents( '.cmb-type-post-search-text' ).find( '.cmb-td input[type="text"]' );
 				// Setup our variables from the field data
 				$.extend( search, search.$idInput.data( 'search' ) );
 
@@ -242,13 +265,16 @@ class CMB2_Post_Search_field {
 			window.cmb2_post_search.addSearchButtons = function() {
 				var $this = $( this );
 				var data = $this.data( 'search' );
-				$this.after( '<div title="'+ data.findtxt +'" class="dashicons dashicons-search cmb2-post-search-button"></div>');
+				$this.after( '<div title="'+ data.findtxt +'" class="cmb2-post-search-button button"><i class="dashicons dashicons-search"></i>' + data.searchtxt + '</div>');
 			};
 
-			$( '.cmb-type-post-search-text .cmb-td input[type="text"]' ).each( window.cmb2_post_search.addSearchButtons );
+			$( '.cmb-type-post-search-text .cmb-td input[type="hidden"]' ).each( window.cmb2_post_search.addSearchButtons );
 
-			$( '.cmb2-wrap' ).on( 'click', '.cmb-type-post-search-text .cmb-td .dashicons-search', window.cmb2_post_search.openSearch );
+			$( '.cmb2-wrap' ).on( 'click', '.cmb-type-post-search-text .cmb-td .cmb2-post-search-button', window.cmb2_post_search.openSearch );
 			$( 'body' ).on( 'click', '.ui-find-overlay', window.cmb2_post_search.closeSearch );
+			$( '.post-titles-container' ).on( 'click', '.clear-field', function() {
+				$(this).closest('.cmb-td').find( 'input' ).attr( 'value', '' ).change();
+			} );
 
 		});
 		</script>
@@ -258,6 +284,41 @@ class CMB2_Post_Search_field {
 				margin: .3em 0 0 2px;
 				cursor: pointer;
 			}
+
+			.cmb2-post-search-button i{
+				vertical-align: middle;
+				margin-right: 5px;
+			}
+
+			#side-sortables .cmb2-post-search-button{
+				margin-top:0.5rem;
+			}
+
+			#side-sortables .cmb-type-post-search-text{
+				margin-bottom: 0;
+			}
+
+			.post-titles-container{
+				display: inline-block;
+				position: relative;
+			}
+
+			.post-titles-container input.post-titles{
+				padding-right: 24px;
+			}
+
+			.post-titles-container .clear-field{
+				position: absolute;
+				top: 5px;
+				right: 5px;
+				cursor:pointer;
+			}
+
+			.post-titles-container input.post-titles[value=""] + .clear-field,
+			.post-titles-container input.post-titles:not([value]) + .clear-field{
+				display: none;
+			}
+
 		</style>
 		<?php
 
